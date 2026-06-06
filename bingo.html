@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Custom Bingo</title>
+<style>
+:root{
+  --bg:#0f0f10; --panel:#1a1a1b; --muted:#9aa0a6; --accent:#6dd07b; --card-bg:linear-gradient(180deg,#151516,#0f0f10); --tile-border:#2b2b2c;
+}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#e8e8e8;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:24px;}
+.app{width:100%;max-width:980px;background:var(--panel);border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,0.6);border:1px solid #232324;}
+h1{margin:0 0 8px 0;font-size:28px;}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px;}
+.tile{position:relative;padding:12px;min-height:92px;border-radius:10px;background:linear-gradient(180deg,#1a1a1b,#0f0f10);border:1px solid var(--tile-border);display:flex;align-items:center;justify-content:center;text-align:center;user-select:none;font-size:14px;line-height:1.15;cursor:pointer;color:#ffffff;transition:all .1s;}
+.tile.free{background:linear-gradient(180deg,#202020,#141414);font-weight:700;color:#ffffff;}
+.tile:hover{filter:brightness(1.1);}
+.tile .mark{position:absolute;inset:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .18s ease;}
+.tile.marked .mark{opacity:1;}
+.mark .circle{width:80%;height:80%;border-radius:50%;background:rgba(109,208,123,0.24);backdrop-filter:blur(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);}
+button#randomBtn{padding:10px 20px;background:#6dd07b;color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin:10px 0;}
+button#randomBtn:hover{background:#8de39a;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Custom Bingo</h1>
+  <div>5×5 — click squares to mark — center is FREE</div>
+  <button id="randomBtn">Get Random Card</button>
+  <div id="grid" class="grid"></div>
+</div>
+
+<script>
+const PHRASES = [
+  "Chimp out",
+  "Becomes a lawyer",
+  "I dindu nuffin",
+  "Refuses to give ID",
+  "Yall raciss",
+  "Ima sue yo ass",
+  "Chimp fight",
+  "I got kids",
+  "I am a black woman!",
+  "Officer please!",
+  "Assaults cops",
+  "Trespassed",
+  "You can’t arrest me",
+  "Starts screaming",
+  "Hit by a train",
+  "Eats shit",
+  "Drinks piss",
+  "Stupid death",
+  "Benji mentions shadowban",
+  "Jew tunnels",
+  "US loves Israel moment",
+  "Electrocuted",
+  "Spits on someone",
+  "McDonald’s fight",
+  "Killed by an animal",
+  "Massive explosion",
+  "Falls off a building",
+  "Mentions Dietrich Eckart",
+  "Benji Heils",
+  // === NEW PHRASES ===
+  "construction accident",
+  "falls from building",
+  "instant death",
+  "The U.S. fucks over its people again",
+  "wigger"
+];
+
+let marks = new Set();
+const gridEl = document.getElementById('grid');
+const randomBtn = document.getElementById('randomBtn');
+
+function shuffle(a) {
+  let m = a.length, i;
+  while (m) {
+    i = Math.floor(Math.random() * m--);
+    [a[m], a[i]] = [a[i], a[m]];
+  }
+  return a;
+}
+
+function buildCard() {
+  marks.clear();
+  
+  const pool = shuffle([...PHRASES]);
+  let selected = pool.slice(0, 24);
+  
+  gridEl.innerHTML = '';
+  let s = 0;
+  
+  for (let i = 0; i < 25; i++) {
+    const tile = document.createElement('button');
+    tile.className = 'tile';
+    tile.setAttribute('data-index', i);
+    
+    if (i === 12) {
+      tile.classList.add('free');
+      tile.textContent = 'FREE';
+      marks.add(i);
+    } else {
+      tile.textContent = selected[s++];
+    }
+    
+    const markWrap = document.createElement('div');
+    markWrap.className = 'mark';
+    const circle = document.createElement('div');
+    circle.className = 'circle';
+    markWrap.appendChild(circle);
+    tile.appendChild(markWrap);
+    
+    tile.addEventListener('click', () => {
+      if (i !== 12) {
+        if (marks.has(i)) {
+          marks.delete(i);
+          tile.classList.remove('marked');
+        } else {
+          marks.add(i);
+          tile.classList.add('marked');
+        }
+        checkBingo();
+      }
+    });
+    
+    gridEl.appendChild(tile);
+  }
+}
+
+function getWinningLines() {
+  const lines = [];
+  const M = (r, c) => r * 5 + c;
+  
+  for (let r = 0; r < 5; r++) {
+    const idxs = [M(r,0), M(r,1), M(r,2), M(r,3), M(r,4)];
+    if (idxs.every(i => marks.has(i))) lines.push(idxs);
+  }
+  
+  for (let c = 0; c < 5; c++) {
+    const idxs = [M(0,c), M(1,c), M(2,c), M(3,c), M(4,c)];
+    if (idxs.every(i => marks.has(i))) lines.push(idxs);
+  }
+  
+  const d1 = [0,6,12,18,24];
+  const d2 = [4,8,12,16,20];
+  if (d1.every(i => marks.has(i))) lines.push(d1);
+  if (d2.every(i => marks.has(i))) lines.push(d2);
+  
+  return lines;
+}
+
+function checkBingo() {
+  if (getWinningLines().length > 0) {
+    fireConfetti();
+  }
+}
+
+function fireConfetti() {
+  for (let i = 0; i < 36; i++) {
+    const el = document.createElement('div');
+    el.style.position = 'fixed';
+    el.style.left = Math.random() * 90 + '%';
+    el.style.top = '-10px';
+    el.style.width = Math.round(Math.random() * 8 + 6) + 'px';
+    el.style.height = Math.round(Math.random() * 10 + 8) + 'px';
+    el.style.background = `hsl(${Math.random()*80+80} ${Math.random()*30+50}% ${Math.random()*15+45}%)`;
+    el.style.zIndex = '9999';
+    el.style.pointerEvents = 'none';
+    document.body.appendChild(el);
+    
+    const dur = Math.random() * 1400 + 1800;
+    el.animate([
+      {transform: `translateY(0) rotate(${Math.random()*360}deg)`, opacity: 1},
+      {transform: `translateY(${Math.random()*600+600}px) rotate(${Math.random()*360+360}deg)`, opacity: 0.8}
+    ], { duration: dur, easing: 'cubic-bezier(.2,.6,.2,1)' });
+    
+    setTimeout(() => el.remove(), dur + 30);
+  }
+}
+
+randomBtn.addEventListener('click', buildCard);
+
+// Initial card
+buildCard();
+</script>
+</body>
+</html>
