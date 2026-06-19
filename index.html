@@ -31,7 +31,6 @@ button#randomBtn:hover{background:#8de39a;}
 
 <script>
 const PHRASES = [
-  "Chimp out",
   "Becomes a lawyer",
   "I dindu nuffin",
   "Refuses to give ID",
@@ -67,7 +66,7 @@ const PHRASES = [
   "wigger",
   "ebt bod",
   "horror story",
-  "steals",
+  "Shitskin Steals",
   "rapist nigger",
   "innocent white person done wrong",
   "chimp stole",
@@ -100,7 +99,7 @@ function buildCard() {
     tile.className = 'tile';
     
     if (i === 12) {
-      tile.textContent = "Chimp out";   // ← Changed here
+      tile.textContent = "Chimp out";   // Center is fixed
     } else {
       tile.textContent = selected[i < 12 ? i : i-1];
     }
@@ -176,3 +175,4 @@ buildCard();
 </script>
 </body>
 </html>
+
